@@ -164,5 +164,8 @@ cython_debug/
 
 # Datasets
 
-ESC-50-master/
-UrbanSound8K/
+/ESC-50-master/
+/UrbanSound8K/
+
+# Tensorflow logs
+logs/
