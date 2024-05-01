@@ -169,3 +169,9 @@ cython_debug/
 
 # Tensorflow logs
 logs/
+
+# VS Code
+.vscode/
+
+# Sandbox
+sandbox/
