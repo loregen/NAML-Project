@@ -3,11 +3,11 @@ import numpy as np
 import pandas as pd
 import librosa
 import pathlib
-from typing import Any
+from typing import Any, Tuple
 
 
 # Wrapper function that loads the selected dataset
-def load_dataset(preprocess_params: dict[str, Any]) -> (tf.data.Dataset, tf.data.Dataset, np.ndarray):
+def load_dataset(preprocess_params: dict[str, Any]) -> Tuple[tf.data.Dataset, tf.data.Dataset, np.ndarray]:
     
     # Wrapper function to load audio files. This is needed because librosa is not directly compatible with TensorFlow operations.
     def load_audio(file_path, label, sample_rate):
@@ -27,7 +27,7 @@ def load_dataset(preprocess_params: dict[str, Any]) -> (tf.data.Dataset, tf.data
 
         return audio, label
 
-    def load_UrbanSound8K(path: pathlib.Path, sample_rate: int) -> (tf.data.Dataset, tf.data.Dataset, np.ndarray):
+    def load_UrbanSound8K(path: pathlib.Path, sample_rate: int) -> Tuple[tf.data.Dataset, tf.data.Dataset, np.ndarray]:
 
         # Load the metadata
         metadata_path = path / "metadata/UrbanSound8K.csv"
@@ -88,7 +88,7 @@ def load_dataset(preprocess_params: dict[str, Any]) -> (tf.data.Dataset, tf.data
 
         return train_dataset, test_dataset, class_names
 
-    def load_ESC_10(path: pathlib.Path, sample_rate: int, whole_ESC_50: bool) -> (tf.data.Dataset, tf.data.Dataset, np.ndarray):
+    def load_ESC_10(path: pathlib.Path, sample_rate: int, whole_ESC_50: bool) -> Tuple[tf.data.Dataset, tf.data.Dataset, np.ndarray]:
 
         # Load the metadata
         metadata_path = path / "meta/esc50.csv"
