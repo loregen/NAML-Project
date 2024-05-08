@@ -134,7 +134,8 @@ def load_dataset(preprocess_params: dict[str, Any]) -> Tuple[tf.data.Dataset, tf
         category_to_int_mapping = {category: i for i, category in enumerate(class_names)}
 
         # Map the category to integer label
-        labels = [category_to_int_mapping[category] for category in labels]
+        labels_train = [category_to_int_mapping[category] for category in labels_train]
+        labels_test = [category_to_int_mapping[category] for category in labels_test]
 
         # Convert lists to tensors
         file_paths_train_tensor = tf.convert_to_tensor(file_paths_train, dtype=tf.string)
