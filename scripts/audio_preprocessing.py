@@ -2,15 +2,14 @@ import tensorflow as tf
 import numpy as np
 import librosa
 import pywt # Import the PyWavelets package
-import sys
 
 from typing import Any
 
 
 # Function that pads or truncates the audio to a fixed length. It is used for the UrbanSound8K dataset, where the audio clips have varying lengths.
-def apply_padding(dataset: tf.data.Dataset, preprocess_params: dict[str, Any]) -> tf.data.Dataset:
+def apply_resizing(dataset: tf.data.Dataset, preprocess_params: dict[str, Any]) -> tf.data.Dataset:
 
-    def pad_with_zeros(audio, preprocess_params: dict[str, Any]):
+    def resize_audio_to_fixed_lenght(audio, preprocess_params: dict[str, Any]):
 
         sample_rate = preprocess_params['TARGET_SR']
         
@@ -33,10 +32,7 @@ def apply_padding(dataset: tf.data.Dataset, preprocess_params: dict[str, Any]) -
 
         return padded_audio
 
-    if preprocess_params['DATASET_NAME'] == 'UrbanSound8K':
-        dataset = dataset.map(lambda audio, label: (pad_with_zeros(audio, preprocess_params), label), num_parallel_calls=tf.data.AUTOTUNE)
-    else:
-        pass
+    dataset = dataset.map(lambda audio, label: (resize_audio_to_fixed_lenght(audio, preprocess_params), label), num_parallel_calls=tf.data.AUTOTUNE)
 
     return dataset
 
