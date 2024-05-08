@@ -122,74 +122,80 @@ def print_confusion_matrix(model, dataset, class_names):
 
 
 # Utility function to plot the feature maps of a model
-def plot_feature_maps(model, layer_index, test_dataset, class_names):
-    def get_layer_output(model, layer_index, test_dataset):
+from ipywidgets import interact, Dropdown
+from IPython.display import clear_output
 
-        # Find the layer by its index
-        layer = model.layers[layer_index]
-        
-        # Create a new model to output the selected layer
-        layer_output_model = tf.keras.Model(inputs=model.inputs, outputs=layer.output)
+def plot_feature_maps(model, test_dataset, class_names, seed=None):
+    # Set the random seed for reproducibility if provided
+    tf.keras.utils.set_random_seed(seed)
 
-        # Get a sample and its label
-        example, label = next(iter(test_dataset.rebatch(1).shuffle(32)))
-        label_str = class_names[np.argmax(label)]
+    example, label = next(iter(test_dataset.rebatch(1).shuffle(32)))
+    example = example[0].numpy()
+    label_str = class_names[np.argmax(label)]
 
-        # Get the output of the layer
-        layer_output = layer_output_model.predict(example)
+    feature_maps_list = [example]
+    for layer in model.layers[1:]:
+        last_output = feature_maps_list[-1]
+        new_output = layer(last_output).numpy()
+        feature_maps_list.append(new_output)
 
-        return layer_output, label_str
+    def display_feature_maps(layer_index):
+        clear_output(wait=False)
 
-    feature_maps, label_str = get_layer_output(model, layer_index, test_dataset)
-    
-    current_layer = model.layers[layer_index]
+        layer_index = int(layer_index)
+        current_layer = model.layers[layer_index]
+        feature_maps = feature_maps_list[layer_index]
 
-    if layer_index == 0:
-        plt.figure(figsize=(10, 2))
-        plt.title(f'{current_layer.name}: {current_layer.input.shape[1:]} - {label_str}')
-        plt.imshow(feature_maps[0, :, :, 0].T, aspect='auto', cmap='viridis', origin='lower')
-        plt.colorbar()
-        plt.show()
+        def plot_input_layer():
+            fig, _ = plt.subplots(figsize=(10, 2))
+            plt.title(f'{current_layer.name}: {current_layer.input.shape[1:]} - {label_str}')
+            plt.imshow(feature_maps[0, :, :, 0].T, aspect='auto', cmap='viridis', origin='lower')
+            plt.colorbar()
+            plt.tight_layout()
+            return fig
 
-    elif feature_maps.ndim == 4:  # Conv2D or MaxPooling2D layers
-        num_feature_maps = feature_maps.shape[-1]
-        size_factor = 3.5  # Adjust this factor to change the size of the subplots
-        num_cols = int(np.sqrt(num_feature_maps))
-        num_rows = int(np.ceil(num_feature_maps / num_cols))
-        figsize = (size_factor * num_cols, size_factor * num_rows)
-        
-        fig, axes = plt.subplots(num_rows, num_cols, figsize=figsize)
+        def plot_conv_feature():
+            num_feature_maps = feature_maps.shape[-1]
+            size_factor = 3.5  # Adjust this factor to change the size of the subplots
+            num_cols = int(np.sqrt(num_feature_maps))
+            num_rows = int(np.ceil(num_feature_maps / num_cols))
+            figsize = (size_factor * num_cols, size_factor * num_rows)
+            fig, axes = plt.subplots(num_rows, num_cols, figsize=figsize)
+            fig.suptitle(f'{current_layer.name}: {current_layer.input.shape[1:]} -> {current_layer.output.shape[1:]} - {label_str}', fontsize=16, y=1)
+            plt.subplots_adjust(top=1.5)
 
-        st = fig.suptitle(f'{current_layer.name}: {current_layer.input.shape[1:]} -> {current_layer.output.shape[1:]} - {label_str}', fontsize=16, y=1)
-        plt.subplots_adjust(top=1.5)
-
-        for i in range(num_feature_maps):
+            for i in range(num_feature_maps):
                 ax = axes.flat[i]
                 feature_map = feature_maps[0, :, :, i]
                 im = ax.imshow(feature_map, aspect='auto', cmap='viridis', origin='lower')
-                
-                # Add a colorbar to each subplot
                 divider = make_axes_locatable(ax)
                 cax = divider.append_axes("right", size="5%", pad=0.05)
                 plt.colorbar(im, cax=cax)
-            
-        plt.tight_layout()
-        plt.show()
-        
-    elif feature_maps.ndim == 2:
-        plt.figure(figsize=(10, 2))
-        plt.title(f'{current_layer.name}: {current_layer.input.shape[1:]} -> {current_layer.output.shape[1:]} - {label_str}')
-        plt.bar(range(len(feature_maps[0])), feature_maps[0])
-        plt.ylabel('Value')
-        # Add class names to x-ticks if this is the output layer
-        if len(model.layers) == layer_index + 1:
-            plt.xticks(range(len(feature_maps[0])), class_names, rotation=45, fontsize=8)
-        plt.show()
-        
-    else:
-        print(f"Layer {layer_index} has an unsupported output shape. Cannot plot feature maps.")
+                ax.axis('off')
+            plt.tight_layout()
+            return fig
 
+        def plot_1d_feature():
+            fig, _ = plt.subplots(figsize=(10, 2))
+            plt.title(f'{current_layer.name}: {current_layer.input.shape[1:]} -> {current_layer.output.shape[1:]} - {label_str}')
+            plt.bar(range(len(feature_maps[0])), feature_maps[0])
+            plt.ylabel('Value')
+            if len(class_names) == len(feature_maps[0]):
+                plt.xticks(range(len(feature_maps[0])), class_names, rotation=90, fontsize=8)
+            plt.tight_layout()
+            return fig
 
+        if layer_index == 0:
+            plot_input_layer()
+        elif feature_maps.ndim == 4:
+            plot_conv_feature()
+        elif feature_maps.ndim == 2:
+            plot_1d_feature()
+        else:
+            print(f"Layer {layer_index} has an unsupported output shape. Cannot plot feature maps.")
+
+    layer_names = {layer.name: str(index) for index, layer in enumerate(model.layers)}
+    interact(display_feature_maps, layer_index=Dropdown(options=layer_names, description="Select Layer:"))
 
 # Utility function to plot the weights of Conv2D layers
 def plot_conv_weights(model):
