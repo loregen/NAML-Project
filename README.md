@@ -1,6 +1,9 @@
 # NAML-Project
 Project for 2023-2024 Numerical Analysis for Machine Learning Course - Urban Sounds Classification 
 
+## Setting up the environment
+The project was developed on a MacOS M1 machine, for which a conda environment yaml file is provided (environment_AppleSilicon.yaml). If you are using a different machine, install the packages found in the yaml manually. 
+
 ## Downloading the datasets
 The datasets are necessary to run the code.
 The ESC-50 dataset can be downloaded and extracted by running the following commands in the root of the project:
