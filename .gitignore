@@ -175,3 +175,6 @@ logs/
 
 # Sandbox
 sandbox/
+
+# Latex
+LaTeXTemplates_journal-article_v2/
